@@ -1,7 +1,8 @@
-package OXx::Encoding;
+package OXx::Encoding::Role::Request;
 use MooseX::Role::Parameterized;
 use namespace::autoclean;
 
+use Encode ();
 use OXx::Encoding::Types;
 
 parameter encoding => (
@@ -18,7 +19,21 @@ parameter html_encoding => (
 role {
     my $p = shift;
 
-    around request_class => sub {
+    my $encoding = Encode::find_encoding($p->encoding);
+
+    sub decode {
+        my $self = shift;
+        my ($data) = @_;
+        return $encoding->decode($data);
+    }
+
+    sub encode {
+        my $self = shift;
+        my ($data) = @_;
+        return $encoding->encode($data);
+    }
+
+    around response_class => sub {
         my $orig = shift;
         my $self = shift;
 
@@ -27,7 +42,7 @@ role {
         return Moose::Meta::Class->create_anon_class(
             superclasses => [$super],
             roles        => [
-                'OXx::Encoding::Role::Request' => {
+                'OXx::Encoding::Role::Response' => {
                     encoding      => $p->encoding,
                     html_encoding => $p->html_encoding,
                 },
