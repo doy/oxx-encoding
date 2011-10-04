@@ -3,6 +3,7 @@ use MooseX::Role::Parameterized;
 use namespace::autoclean;
 
 use Encode ();
+use Moose::Util 'with_traits';
 use OXx::Encoding::Types;
 
 parameter encoding => (
@@ -37,18 +38,12 @@ role {
         my $orig = shift;
         my $self = shift;
 
-        my $super = $self->$orig(@_);
-
-        return Moose::Meta::Class->create_anon_class(
-            superclasses => [$super],
-            roles        => [
-                'OXx::Encoding::Role::Response' => {
-                    encoding      => $p->encoding,
-                    html_encoding => $p->html_encoding,
-                },
-            ],
-            cache        => 1,
-        )->name;
+        return with_traits($self->$orig(@_),
+            'OXx::Encoding::Role::Response' => {
+                encoding      => $p->encoding,
+                html_encoding => $p->html_encoding,
+            },
+        );
     };
 }
 
